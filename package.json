@@ -9,16 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ant-design/charts": "1.2.10",
+    "@ant-design/icons": "^4.7.0",
+    "antd": "^5.1.0",
+    "axios": "^1.6.7",
+    "next": "^13.1.0",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.1.0"
+    "react-query": "^3.39.3"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.1.0"
+    "eslint-config-next": "14.1.0",
+    "sass": "^1.71.0",
+    "typescript": "^5"
   }
 }
