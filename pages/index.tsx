@@ -1,5 +1,3 @@
-import Head from 'next/head';
-import Image from 'next/image';
 import { Roboto } from 'next/font/google';
 import {
   Avatar,
@@ -18,7 +16,13 @@ import { useQuery } from 'react-query';
 import { Token } from '@/types/types';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { Retryer } from 'react-query/types/core/retryer';
+import { Chart } from 'react-google-charts';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  RedoOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
 
 const { Search } = Input;
 
@@ -79,13 +83,18 @@ export default function Home() {
     }
   }, [data]);
 
+  const options = {
+    title: 'My Coins',
+  };
+
   return (
     <div style={{ padding: 32 }} className={roboto.className}>
       <Row gutter={[32, 32]}>
         <Col span={24} lg={24}>
-          <Card>
+          <Card loading={isLoading}>
             <Space>
               <Button
+                icon={<PlusOutlined />}
                 onClick={() => {
                   setIsModalOpen(true);
                 }}
@@ -93,15 +102,21 @@ export default function Home() {
               >
                 Add Stock
               </Button>
-              <Button type="primary" danger>
+              <Button
+                icon={<RedoOutlined />}
+                onClick={() => {
+                  refetch();
+                }}
+                type="default"
+              >
                 Refresh
               </Button>
             </Space>
           </Card>
         </Col>
 
-        <Col span={24} lg={8}>
-          <Card>
+        <Col span={24} lg={12}>
+          <Card loading={isLoading} style={{ width: '100%', height: '100%' }}>
             <List
               pagination={{ pageSize: 5 }}
               dataSource={myTokens || []}
@@ -128,6 +143,7 @@ export default function Home() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
+                          flexWrap: 'wrap',
                         }}
                       >
                         <Tooltip
@@ -137,20 +153,56 @@ export default function Home() {
                           {item.weightedAvgPrice}
                         </Tooltip>
 
-                        <Space wrap>
+                        <Space>
                           <Input
-                            value={item.amount || 0}
-                            onChange={(e) => {}}
+                            value={item.amountInput || 0}
+                            onChange={(e) => {
+                              setMyTokens(
+                                myTokens.map((myToken) => {
+                                  if (myToken.symbol == item.symbol) {
+                                    return {
+                                      ...item,
+                                      amountInput: parseInt(e.target.value),
+                                    };
+                                  } else {
+                                    return myToken;
+                                  }
+                                })
+                              );
+                            }}
                             placeholder="Input a number"
                             maxLength={16}
                             type="number"
                           />
-                          <Button onClick={() => {
-                            
-                          }} type="primary">
+                          <Button
+                            icon={<SaveOutlined />}
+                            onClick={() => {
+                              if (item.amountInput && item.amountInput > 0) {
+                                const updated = myTokens.map((myToken) => {
+                                  if (myToken.symbol == item.symbol) {
+                                    return {
+                                      ...item,
+                                      amount: item.amountInput,
+                                    };
+                                  } else {
+                                    return myToken;
+                                  }
+                                });
+                                setMyTokens(updated);
+                                localStorage.setItem(
+                                  'myTokens',
+                                  JSON.stringify(updated)
+                                );
+                              } else {
+                                message.error('Please enter a valid amount!');
+                              }
+                            }}
+                            type="primary"
+                          >
                             Update
                           </Button>
                           <Button
+                            icon={<DeleteOutlined />}
                             onClick={() => {
                               const updatedMyTokens = myTokens.filter(
                                 (myToken) => myToken.symbol !== item.symbol
@@ -176,15 +228,32 @@ export default function Home() {
           </Card>
         </Col>
 
-        <Col span={24} lg={16}>
-          <Card></Card>
+        <Col span={24} lg={12}>
+          <Card loading={isLoading} style={{ width: '100%', height: '100%' }}>
+            <div style={{ width: '100%', height: '100%' }}>
+              <Chart
+                chartType="PieChart"
+                data={[
+                  ['Symbol', 'Amount'],
+                  ...(myTokens?.length
+                    ? myTokens.map((token) => [token.symbol, token.amount])
+                    : [['No Token', 1]]),
+                ]}
+                options={options}
+                width={'100%'}
+                height={471}
+              />
+            </div>
+          </Card>
         </Col>
       </Row>
 
       <Modal
         title="Search"
         open={isModalOpen}
-        onOk={() => {}}
+        onOk={() => {
+          setIsModalOpen(false);
+        }}
         onCancel={() => {
           setIsModalOpen(false);
         }}
@@ -236,13 +305,14 @@ export default function Home() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      flexWrap: 'wrap',
                     }}
                   >
                     <Tooltip placement="top" title={'Weighted Average Price'}>
                       {item.weightedAvgPrice}
                     </Tooltip>
 
-                    <Space wrap>
+                    <Space>
                       <Input
                         value={item.amountInput || 0}
                         onChange={(e) => {
@@ -267,7 +337,8 @@ export default function Home() {
                         (token) => token.symbol == item.symbol
                       ) ? (
                         <Button
-                          style={{ marginRight: 109 }}
+                          icon={<PlusOutlined />}
+                          style={{ marginRight: 132 }}
                           onClick={() => {
                             if (item?.amountInput && item?.amountInput > 0) {
                               const updatedMyTokens = [
@@ -290,25 +361,37 @@ export default function Home() {
                       ) : (
                         <>
                           <Button
+                            icon={<SaveOutlined />}
                             onClick={() => {
-                              setMyTokens(
-                                myTokens.map((myToken) => {
-                                  if (item.symbol == myToken.symbol) {
-                                    return {
-                                      ...item,
-                                      amount: item.amountInput,
-                                    };
-                                  } else {
-                                    return myToken;
+                              if (item.amountInput && item.amountInput > 0) {
+                                const updatedMyTokens = myTokens.map(
+                                  (myToken) => {
+                                    if (item.symbol == myToken.symbol) {
+                                      return {
+                                        ...item,
+                                        amount: item.amountInput,
+                                      };
+                                    } else {
+                                      return myToken;
+                                    }
                                   }
-                                })
-                              );
+                                );
+                                setMyTokens(updatedMyTokens);
+
+                                localStorage.setItem(
+                                  'myTokens',
+                                  JSON.stringify(updatedMyTokens)
+                                );
+                              } else {
+                                message.error('Please enter a valid amount!');
+                              }
                             }}
                             type="primary"
                           >
                             Update
                           </Button>
                           <Button
+                            icon={<DeleteOutlined />}
                             onClick={() => {
                               const updatedMyTokens = myTokens.filter(
                                 (myToken) => myToken.symbol !== item.symbol

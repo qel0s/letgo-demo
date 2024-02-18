@@ -25,24 +25,3 @@ export interface Token {
   amountInput?: number;
 }
 
-export interface PieChartState {
-  options: {
-    series: number[];
-    chart: {
-      width: number;
-      type: string;
-    };
-    labels: string[];
-    responsive: {
-      breakpoint: number;
-      options: {
-        chart: {
-          width: number;
-        };
-        legend: {
-          position: string;
-        };
-      };
-    }[];
-  };
-}
